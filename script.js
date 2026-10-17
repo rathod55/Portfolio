@@ -1,32 +1,13 @@
-const glow = document.querySelector('.cursor-glow');
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-if (!prefersReducedMotion && glow) {
-  window.addEventListener('pointermove', (event) => {
-    glow.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
-  });
-}
-
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-        observer.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.14 }
-);
-
-document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
-
-document.querySelectorAll('a[href^="#"]').forEach((link) => {
-  link.addEventListener('click', (event) => {
-    const target = document.querySelector(link.getAttribute('href'));
-    if (target) {
-      event.preventDefault();
-      target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-    }
-  });
-});
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const year = document.querySelector('#year');
+if (year) year.textContent = new Date().getFullYear();
+const revealObserver = new IntersectionObserver((entries, observer) => { entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add('in-view'); observer.unobserve(entry.target); } }); }, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach((item) => revealObserver.observe(item));
+const cursor = document.querySelector('.cursor-orb');
+if (!reduceMotion && cursor) window.addEventListener('pointermove', (event) => { cursor.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`; });
+document.querySelectorAll('.magnetic').forEach((button) => { if (reduceMotion) return; button.addEventListener('pointermove', (event) => { const box = button.getBoundingClientRect(); const x = event.clientX - box.left - box.width / 2; const y = event.clientY - box.top - box.height / 2; button.style.transform = `translate(${x * .13}px, ${y * .16}px)`; }); button.addEventListener('pointerleave', () => { button.style.transform = ''; }); });
+document.querySelectorAll('.tilt').forEach((card) => { if (reduceMotion) return; card.addEventListener('pointermove', (event) => { const box = card.getBoundingClientRect(); const x = (event.clientX - box.left) / box.width - .5; const y = (event.clientY - box.top) / box.height - .5; card.style.transform = `rotateY(${x * 3.2}deg) rotateX(${y * -3.2}deg) translateY(-4px)`; }); card.addEventListener('pointerleave', () => { card.style.transform = ''; }); });
+const form = document.querySelector('[data-mail-form]');
+if (form) form.addEventListener('submit', (event) => { event.preventDefault(); const data = new FormData(form); const subject = encodeURIComponent(`Portfolio enquiry from ${data.get('name') || 'a new contact'}`); const body = encodeURIComponent(`Name: ${data.get('name')}\nEmail: ${data.get('email')}\n\n${data.get('message')}`); window.location.href = `mailto:hello@abhijeetrathore.com?subject=${subject}&body=${body}`; });
+const canvas = document.querySelector('#starfield');
+if (canvas && !reduceMotion) { const context = canvas.getContext('2d'); let stars, pointer = { x: 0, y: 0 }; const fit = () => { canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0); stars = Array.from({ length: Math.min(110, Math.floor(innerWidth / 12)) }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 1.25 + .2, drift: Math.random() * .14 + .02, tone: Math.random() > .82 ? '157,140,255' : '101,245,236' })); }; const draw = () => { context.clearRect(0, 0, innerWidth, innerHeight); stars.forEach((star, index) => { star.y -= star.drift; if (star.y < -3) { star.y = innerHeight + 3; star.x = Math.random() * innerWidth; } const px = star.x + (pointer.x - innerWidth / 2) * (index % 4 ? .004 : .012); const py = star.y + (pointer.y - innerHeight / 2) * .004; context.fillStyle = `rgba(${star.tone},${.22 + star.r / 2})`; context.beginPath(); context.arc(px, py, star.r, 0, Math.PI * 2); context.fill(); }); requestAnimationFrame(draw); }; fit(); draw(); addEventListener('resize', fit); addEventListener('pointermove', (event) => { pointer.x = event.clientX; pointer.y = event.clientY; }); }
